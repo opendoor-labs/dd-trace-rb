@@ -97,7 +97,9 @@ static bool incompatible_library(void *handle, VALUE *failure_details) {
   }
 
   if (p_loaded_sym == NULL) {
-    *failure_details = rb_str_new_cstr("library was did not export well-known symbol ruby_xmalloc() or ruby_xfree()");
+    const char *failure_prefix = "library is missing well-known symbol ruby_xmalloc() or ruby_xfree()";
+    char *failure = dlerror();
+    *failure_details = failure == NULL ? rb_str_new_cstr(failure_prefix) : rb_sprintf("%s: %s", failure_prefix, failure);
     unload_failed_library(handle);
     return true;
   } else if (p_loaded_sym != p_ref_sym) {
