@@ -64,7 +64,7 @@ static VALUE _native_load(VALUE self, VALUE ruby_path, VALUE ruby_init_name) {
 
   if (
     failed_to_load(handle, &failure_details) ||
-    incompatible_library(handle, &failure_details) ||
+    /*incompatible_library(handle, &failure_details) ||*/
     failed_to_initialize(handle, init_name, &failure_details)
   ) {
     return rb_ary_new_from_args(2, error_symbol, failure_details);
