@@ -85,14 +85,22 @@ static bool failed_to_load(void *handle, VALUE *failure_details) {
 static bool incompatible_library(void *handle, VALUE *failure_details) {
   // The library being loaded may be linked to a different libruby than the current executing Ruby.
   // We check if this is the case by checking if a well-known symbol resolves to a common address.
+
+  // Well-known symbol defaults to ruby_xmalloc()
   void *p_loaded_sym = dlsym(handle, "ruby_malloc");
   void *p_ref_sym = &ruby_xmalloc;
-  if (ptr == NULL) {
+
+  // Unable to find ruby_xmalloc() in exports, so fall back to ruby_xfree()
+  if (p_loaded_sym == NULL) {
     p_loaded_sym = dlsym(handle, "ruby_xfree");
     p_ref_sym = &ruby_xfree;
   }
 
-  if (p_loaded_sym != p_ref_sym) {
+  if (p_loaded_sym == NULL) {
+    *failure_details = rb_str_new_cstr("library was did not export well-known symbol ruby_xmalloc() or ruby_xfree()");
+    unload_failed_library(handle);
+    return true;
+  } else if (p_loaded_sym != p_ref_sym) {
     *failure_details = rb_str_new_cstr("library was compiled and linked to a different Ruby version");
     unload_failed_library(handle);
     return true;
